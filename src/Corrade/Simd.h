@@ -107,19 +107,17 @@ the detected set in some way:
 
 @m_class{m-note m-success}
 
-@par SSE3, SSSE3 and SSE4 on MSVC
+@par SSE3, SSSE3, SSE4.1/SSE4.2, AVX F16C and AVX FMA on MSVC
     A special case worth mentioning are SSE3 and newer instructions on Windows.
-    MSVC only provides `/arch:SSE2` and `/arch:AVX` for either @ref Sse2 or
-    @ref Avx, but nothing in between. That means it's impossible to rely just
-    on compile-time detection to use the later SSE features on machines that
-    don't support AVX yet, you have to use runtime dispatch there.
+    MSVC only provides a very coarse `/arch:SSE2`, `/arch:AVX` and `/arch:AVX2`
+    for either @ref Sse2, @ref Avx or @ref Avx2, but nothing in between. That
+    means it's impossible to rely just on compile-time detection to use the
+    later SSE features on machines that don't support AVX yet (or the various
+    AVX additions on machines without AVX2), you have to use runtime dispatch
+    there.
 
 @todo POPCNT!!! for the Math function, LZCNT ... treat them as a step between
     4.2 and AVX? or as a subset of AVX?
-@todo FMA3 -- oldest AMD processors have it with AVX1.1 already (or was it
-    FMA4?), Intel only since AVX2 ... put it as superset of AVX2?
-@todo AVX512, at least the "foundation" subset?
-@todo Neoverse N1? or there's no 256-bit instructions? SVE2?
 */
 namespace Simd {
 
@@ -196,13 +194,40 @@ and the @ref Avx tag for more information.
 struct AvxT: Sse42T {};
 
 /**
+@brief AVX F16C tag type
+@m_since_latest
+
+Available only on @ref CORRADE_TARGET_X86 "x86". See the @ref Simd namespace
+and the @ref AvxF16c tag for more information.
+*/
+struct AvxF16cT: AvxT {};
+
+/**
+@brief AVX FMA tag type
+@m_since_latest
+
+Available only on @ref CORRADE_TARGET_X86 "x86". See the @ref Simd namespace
+and the @ref AvxFma tag for more information.
+*/
+struct AvxFmaT: AvxF16cT {};
+
+/**
 @brief AVX2 tag type
 @m_since_latest
 
 Available only on @ref CORRADE_TARGET_X86 "x86". See the @ref Simd namespace
 and the @ref Avx2 tag for more information.
 */
-struct Avx2T: AvxT {};
+struct Avx2T: AvxFmaT {};
+
+/**
+@brief AVX-512 Foundation tag type
+@m_since_latest
+
+Available only on @ref CORRADE_TARGET_X86 "x86". See the @ref Simd namespace
+and the @ref Avx512f tag for more information.
+*/
+struct Avx512fT: Avx2T {};
 
 namespace Implementation {
     template<> struct Trait<Sse2T> { enum: std::uint32_t { Index = 1 << 0 }; };
@@ -211,7 +236,10 @@ namespace Implementation {
     template<> struct Trait<Sse41T> { enum: std::uint32_t { Index = 1 << 3 }; };
     template<> struct Trait<Sse42T> { enum: std::uint32_t { Index = 1 << 4 }; };
     template<> struct Trait<AvxT> { enum: std::uint32_t { Index = 1 << 5 }; };
-    template<> struct Trait<Avx2T> { enum: std::uint32_t { Index = 1 << 6 }; };
+    template<> struct Trait<AvxF16cT> { enum: std::uint32_t { Index = 1 << 6 }; };
+    template<> struct Trait<AvxFmaT> { enum: std::uint32_t { Index = 1 << 7 }; };
+    template<> struct Trait<Avx2T> { enum: std::uint32_t { Index = 1 << 8 }; };
+    template<> struct Trait<Avx512fT> { enum: std::uint32_t { Index = 1 << 9 }; };
 }
 #endif
 
@@ -225,8 +253,28 @@ and the @ref Neon tag for more information.
 */
 struct NeonT: ScalarT {};
 
+/**
+@brief NEON half-float tag type
+@m_since_latest
+
+Available only on @ref CORRADE_TARGET_ARM "ARM". See the @ref Simd namespace
+and the @ref NeonFp16 tag for more information.
+*/
+struct NeonFp16T {};
+
+/**
+@brief NEON FMA tag type
+@m_since_latest
+
+Available only on @ref CORRADE_TARGET_ARM "ARM". See the @ref Simd namespace
+and the @ref NeonFma tag for more information.
+*/
+struct NeonFmaT {};
+
 namespace Implementation {
     template<> struct Trait<NeonT> { enum: std::uint32_t { Index = 1 << 0 }; };
+    template<> struct Trait<NeonFp16T> { enum: std::uint32_t { Index = 1 << 1 }; };
+    template<> struct Trait<NeonFmaT> { enum: std::uint32_t { Index = 1 << 2 }; };
 }
 #endif
 
@@ -252,8 +300,14 @@ namespace Implementation {
 See the @ref Default tag for more information.
 */
 #ifdef CORRADE_TARGET_X86
-    #ifdef CORRADE_TARGET_AVX2
+    #ifdef CORRADE_TARGET_AVX512F
+    typedef Avx512fT DefaultT;
+    #elif defined(CORRADE_TARGET_AVX2)
     typedef Avx2T DefaultT;
+    #elif defined(CORRADE_TARGET_AVX_FMA)
+    typedef AvxFmaT DefaultT;
+    #elif defined(CORRADE_TARGET_AVX_F16C)
+    typedef AvxF16cT DefaultT;
     #elif defined(CORRADE_TARGET_AVX)
     typedef AvxT DefaultT;
     #elif defined(CORRADE_TARGET_SSE42)
@@ -367,20 +421,52 @@ constexpr Sse42T Sse42{};
 
 [Advanced Vector Extensions](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions).
 Available only on @ref CORRADE_TARGET_X86 "x86". Superset of @ref Sse42,
-implied by @ref Avx2.
+implied by @ref AvxFma.
 @see @ref CORRADE_TARGET_AVX
 */
 constexpr AvxT Avx{};
+
+/**
+@brief AVX F16C tag
+@m_since_latest
+
+[F16C]https://en.wikipedia.org/wiki/F16C) instructions. Available only on
+@ref CORRADE_TARGET_X86 "x86". Superset of @ref Avx, implied by @ref AvxFma.
+@see @ref CORRADE_TARGET_AVX_F16C
+*/
+constexpr AvxF16cT AvxF16c{};
+
+/**
+@brief AVX FMA tag
+@m_since_latest
+
+[FMA3 instruction set](https://en.wikipedia.org/wiki/FMA_instruction_set).
+Available only on @ref CORRADE_TARGET_X86 "x86". Superset of @ref AvxF16c,
+implied by @ref Avx2.
+@see @ref CORRADE_TARGET_AVX_FMA
+*/
+constexpr AvxFmaT AvxFma{};
 
 /**
 @brief AVX2 tag
 @m_since_latest
 
 [Advanced Vector Extensions 2](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions#Advanced_Vector_Extensions_2).
-Available only on @ref CORRADE_TARGET_X86 "x86". Superset of @ref Avx.
+Available only on @ref CORRADE_TARGET_X86 "x86". Superset of @ref AvxFma,
+implied by @ref Avx512f.
 @see @ref CORRADE_TARGET_AVX2
 */
 constexpr Avx2T Avx2{};
+
+/**
+@brief AVX-512 Foundation tag
+@m_since_latest
+
+[AVX-512](https://en.wikipedia.org/wiki/AVX-512) Foundation. Available only on
+@ref CORRADE_TARGET_X86 "x86". Superset of @ref Avx2.
+@see @ref CORRADE_TARGET_AVX512F
+*/
+constexpr Avx512fT Avx512f{};
 #endif
 
 #if defined(CORRADE_TARGET_ARM) || defined(DOXYGEN_GENERATING_OUTPUT)
@@ -389,10 +475,32 @@ constexpr Avx2T Avx2{};
 @m_since_latest
 
 [ARM NEON](https://en.wikipedia.org/wiki/ARM_architecture#Advanced_SIMD_(Neon)).
-Available only on @ref CORRADE_TARGET_ARM "ARM". Superset of @ref Scalar.
+Available only on @ref CORRADE_TARGET_ARM "ARM". Superset of @ref Scalar,
+implied by @ref NeonFp16.
 @see @ref CORRADE_TARGET_NEON
 */
 constexpr NeonT Neon{};
+
+/**
+@brief NEON half-float tag type
+@m_since_latest
+
+ARM NEON with IEEE [half-precision floating-point support](https://en.wikipedia.org/wiki/Half-precision_floating-point_format).
+Available only on @ref CORRADE_TARGET_ARM "ARM". Superset of @ref Neon, implied
+by @ref NeonFma.
+@see @ref CORRADE_TARGET_NEON_FP16
+*/
+constexpr NeonFp16T NeonFp16{};
+
+/**
+@brief NEON FMA tag type
+@m_since_latest
+
+ARM NEON with FMA instructions. Available only on
+@ref CORRADE_TARGET_ARM "ARM". Superset of @ref NeonFp16.
+@see @ref CORRADE_TARGET_NEON_FMA
+*/
+constexpr NeonFmaT NeonFma{};
 #endif
 
 #if defined(CORRADE_TARGET_EMSCRIPTEN) || defined(DOXYGEN_GENERATING_OUTPUT)
@@ -414,7 +522,10 @@ constexpr Simd128T Simd128{};
 Highest instruction set available on given architecture with current compiler
 flags. On @ref CORRADE_TARGET_X86 it's one of these:
 
+-   @ref Avx512f if @ref CORRADE_TARGET_AVX512F is defined
 -   @ref Avx2 if @ref CORRADE_TARGET_AVX2 is defined
+-   @ref AvxFma if @ref CORRADE_TARGET_AVX_FMA is defined
+-   @ref AvxF16c if @ref CORRADE_TARGET_AVX_F16C is defined
 -   @ref Avx if @ref CORRADE_TARGET_AVX is defined
 -   @ref Sse42 if @ref CORRADE_TARGET_SSE42 is defined
 -   @ref Sse41 if @ref CORRADE_TARGET_SSE41 is defined
@@ -425,6 +536,8 @@ flags. On @ref CORRADE_TARGET_X86 it's one of these:
 
 On @ref CORRADE_TARGET_ARM it's one of these:
 
+-   @ref NeonFma if @ref CORRADE_TARGET_NEON_FMA is defined
+-   @ref NeonFp16 if @ref CORRADE_TARGET_NEON_FP16 is defined
 -   @ref Neon if @ref CORRADE_TARGET_NEON is defined
 -   @ref Scalar otherwise
 
@@ -452,16 +565,18 @@ class CORRADE_UTILITY_EXPORT Features {
          *
          * On @ref CORRADE_TARGET_X86 "x86" and GCC, Clang or MSVC uses the
          * `__get_cpuid()` / `__cpuid()` builtin to check for the @ref Sse2,
-         * @ref Sse3, @ref Ssse3, @ref Sse41, @ref Sse42, @ref Avx and
-         * @ref Avx2 runtime features. @ref Avx needs OS support as well, if
-         * it's not present, no following flags are checked either. On
-         * compilers other than GCC, Clang and MSVC the check falls back to
-         * checking the preprocessor @ref CORRADE_TARGET_SSE2 etc. variables.
+         * @ref Sse3, @ref Ssse3, @ref Sse41, @ref Sse42, @ref Avx,
+         * @ref AvxF16c, @ref AvxFma, @ref Avx2 and @ref Avx512f runtime
+         * features. @ref Avx needs OS support as well, if it's not present, no
+         * following flags are checked either. On compilers other than GCC,
+         * Clang and MSVC the check falls back to checking the preprocessor
+         * @ref CORRADE_TARGET_SSE2 etc. variables.
          *
          * On @ref CORRADE_TARGET_ARM "ARM", detecting @ref Neon is very
          * involved including blacklisting certain chips that misreport their
          * capabilities and thus it's reported only if the preprocessor
-         * variable @ref CORRADE_TARGET_NEON is set.
+         * variable @ref CORRADE_TARGET_NEON is set, similarly for
+         * @ref NeonFp16 and @ref NeonFma.
          *
          * On @ref CORRADE_TARGET_WASM "WebAssembly" an attempt to use
          * @ref Simd128 instructions without runtime support results in a

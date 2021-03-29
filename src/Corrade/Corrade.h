@@ -592,6 +592,7 @@ only implied by `/arch:AVX2`). Superset of @ref CORRADE_TARGET_AVX, implied by
 Although there's no documented relation between AVX, F16C, FMA and AVX2,
 looking the history of released Intel and AMD CPUs it can be seen that all CPUs
 having F16C support plain AVX as well, and all CPUs supporting FMA have F16C.
+@see @relativeref{Corrade,Simd}, @relativeref{Corrade,Simd::AvxF16c}
 */
 #define CORRADE_TARGET_AVX_F16C
 #undef CORRADE_TARGET_AVX_F16C
@@ -610,6 +611,7 @@ AMD processors and isn't anymore, is not detected, and AMD switched to FMA3
 since. Although there's no documented relation between AVX, F16C, FMA and AVX2,
 looking the history of released Intel and AMD CPUs it can be seen that all CPUs
 having FMA support F16C as well, and all CPUs supporting AVX2 have FMA.
+@see @relativeref{Corrade,Simd}, @relativeref{Corrade,Simd::AvxFma}
 */
 #define CORRADE_TARGET_AVX_FMA
 #undef CORRADE_TARGET_AVX_FMA
@@ -635,6 +637,7 @@ MSVC). Superset of @ref CORRADE_TARGET_AVX_FMA, implied by
 Defined on @ref CORRADE_TARGET_X86 "x86" if [AVX-512](https://en.wikipedia.org/wiki/AVX-512)
 Foundation instructions are enabled at compile time (`-mavx512f` and higher on
 GCC/Clang, `/arch:AVX512` on MSVC). Superset of @ref CORRADE_TARGET_AVX2.
+@see @relativeref{Corrade,Simd}, @relativeref{Corrade,Simd::Avx512f}
 */
 #define CORRADE_TARGET_AVX512F
 #undef CORRADE_TARGET_AVX512F
@@ -674,6 +677,7 @@ support is enabled at compile time (`-mfpu=neon-fp16` or higher on GCC/Clang).
 Not defined if only the ARM alternative half-float representation is available,
 which trades one extra exponent value for a lack of infinity and NaN support.
 Superset of @ref CORRADE_TARGET_NEON, implied by @ref CORRADE_TARGET_NEON_FMA.
+@see @relativeref{Corrade,Simd}, @relativeref{Corrade,Simd::NeonFp16}
 */
 #define CORRADE_TARGET_NEON_FP16
 #undef CORRADE_TARGET_NEON_FP16
@@ -686,6 +690,7 @@ Defined on @ref CORRADE_TARGET_ARM "ARM" if NEON FMA instructions are enabled
 at compile time (`-mfpu=neon-vfpv4` on GCC/Clang). Not defined if FMA is only
 available for scalar code and not for NEON. Superset of
 @ref CORRADE_TARGET_NEON_FP16.
+@see @relativeref{Corrade,Simd}, @relativeref{Corrade,Simd::NeonFma}
 */
 #define CORRADE_TARGET_NEON_FMA
 #undef CORRADE_TARGET_NEON_FMA

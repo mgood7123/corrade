@@ -284,15 +284,21 @@ void SimdTest::detectRuntime() {
 
     #ifdef CORRADE_TARGET_X86
     /* Test that for every feature, the subset is present as well */
-    if(features & Simd::Avx2) CORRADE_VERIFY(features & Simd::Avx);
+    if(features & Simd::Avx512f) CORRADE_VERIFY(features & Simd::Avx2);
+    if(features & Simd::Avx2) CORRADE_VERIFY(features & Simd::AvxFma);
+    if(features & Simd::AvxFma) CORRADE_VERIFY(features & Simd::AvxF16c);
+    if(features & Simd::AvxF16c) CORRADE_VERIFY(features & Simd::Avx);
     if(features & Simd::Avx) CORRADE_VERIFY(features & Simd::Sse42);
     if(features & Simd::Sse42) CORRADE_VERIFY(features & Simd::Sse41);
     if(features & Simd::Sse41) CORRADE_VERIFY(features & Simd::Ssse3);
     if(features & Simd::Ssse3) CORRADE_VERIFY(features & Simd::Sse3);
     if(features & Simd::Sse3) CORRADE_VERIFY(features & Simd::Sse2);
+    #elif defined(CORRADE_TARGET_ARM)
+    if(features & Simd::NeonFma) CORRADE_VERIFY(features & Simd::NeonFp16);
+    if(features & Simd::NeonFp16) CORRADE_VERIFY(features & Simd::Neon);
     #else
-    /* ARM and WebAssembly currently have just one feature, so no subset
-       testing applies on those */
+    /* WebAssembly currently has just one feature, so no subset testing applies
+       on those */
     #endif
 }
 

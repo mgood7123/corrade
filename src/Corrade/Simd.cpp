@@ -66,9 +66,14 @@ static_assert(sizeof(Simd::Ssse3) == 1, "");
 static_assert(sizeof(Simd::Sse41) == 1, "");
 static_assert(sizeof(Simd::Sse42) == 1, "");
 static_assert(sizeof(Simd::Avx) == 1, "");
+static_assert(sizeof(Simd::AvxF16c) == 1, "");
+static_assert(sizeof(Simd::AvxFma) == 1, "");
 static_assert(sizeof(Simd::Avx2) == 1, "");
+static_assert(sizeof(Simd::Avx512f) == 1, "");
 #elif defined(CORRADE_TARGET_ARM)
 static_assert(sizeof(Simd::Neon) == 1, "");
+static_assert(sizeof(Simd::NeonFp16) == 1, "");
+static_assert(sizeof(Simd::NeonFma) == 1, "");
 #elif defined(CORRADE_TARGET_WASM)
 static_assert(sizeof(Simd::Simd128) == 1, "");
 #endif
@@ -125,6 +130,9 @@ Features::Features(): _data{} {
     /* If AVX is not supported, we don't check any following flags either */
     if(!(_data & Implementation::Trait<AvxT>::Index)) return;
 
+    if(cpuid.e.cx & (1 << 29)) _data |= Implementation::Trait<AvxF16cT>::Index;
+    if(cpuid.e.cx & (1 << 12)) _data |= Implementation::Trait<AvxFmaT>::Index;
+
     /* https://en.wikipedia.org/wiki/CPUID#EAX=7,_ECX=0:_Extended_Features */
     #ifdef CORRADE_TARGET_MSVC
     __cpuidex(cpuid.data, 7, 0);
@@ -152,6 +160,7 @@ Features::Features(): _data{} {
     __cpuid_count(7, 0, cpuid.e.ax, cpuid.e.bx, cpuid.e.cx, cpuid.e.dx);
     #endif
     if(cpuid.e.bx & (1 << 5)) _data |= Implementation::Trait<Avx2T>::Index;
+    if(cpuid.e.bx & (1 << 16)) _data |= Implementation::Trait<Avx512fT>::Index;
 
     /* Fall back to compile-time-defined features otherwise. On x86 this is
        very prone to code rot, please try to keep it up-to-date PLEASE. */
@@ -181,6 +190,12 @@ Features::Features(): _data{} {
     #elif defined(CORRADE_TARGET_ARM)
     #ifdef CORRADE_TARGET_NEON
     _data |= Implementation::Trait<NeonT>::Index;
+    #endif
+    #ifdef CORRADE_TARGET_NEON_FP16
+    _data |= Implementation::Trait<NeonFp16T>::Index;
+    #endif
+    #ifdef CORRADE_TARGET_NEON_FMA
+    _data |= Implementation::Trait<NeonFmaT>::Index;
     #endif
 
     #elif defined(CORRADE_TARGET_WASM)
@@ -212,9 +227,14 @@ Utility::Debug& operator<<(Utility::Debug& debug, const Features value) {
     _c(Sse41)
     _c(Sse42)
     _c(Avx)
+    _c(AvxF16c)
+    _c(AvxFma)
     _c(Avx2)
+    _c(Avx512f)
     #elif defined(CORRADE_TARGET_ARM)
     _c(Neon)
+    _c(NeonFp16)
+    _c(NeonFma)
     #elif defined(CORRADE_TARGET_EMSCRIPTEN)
     _c(Simd128)
     #endif
