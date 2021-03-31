@@ -31,6 +31,19 @@
 #include "Corrade/TestSuite/Tester.h"
 #include "Corrade/Utility/DebugStl.h" /** @todo remove when <sstream> is gone */
 
+/* https://gist.github.com/rygorous/f26f5f60284d9d9246f6, fixed since 4.9 */
+#if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__*100 + __GNUC_MINOR__ < 409
+#pragma GCC push_options
+#pragma GCC target("sse3")
+#pragma push_macro("__SSE3__")
+#define __SSE3__
+#endif
+#include <pmmintrin.h>
+#if defined(CORRADE_TARGET_GCC) && !defined(CORRADE_TARGET_CLANG) && __GNUC__*100 + __GNUC_MINOR__ < 409
+#pragma pop_macro("__SSE3__")
+#pragma GCC pop_options
+#endif
+
 namespace Corrade { namespace Test { namespace {
 
 struct SimdTest: TestSuite::Tester {
@@ -58,6 +71,7 @@ struct SimdTest: TestSuite::Tester {
     void detectRuntime();
 
     void tagDispatch();
+    template<class T> void enableMacros();
 
     void debug();
     void debugPacked();
@@ -80,6 +94,48 @@ SimdTest::SimdTest() {
               &SimdTest::detectRuntime,
 
               &SimdTest::tagDispatch,
+              #ifdef CORRADE_ENABLE_SSE2
+              &SimdTest::enableMacros<Simd::Sse2T>,
+              #endif
+              #ifdef CORRADE_ENABLE_SSE3
+              &SimdTest::enableMacros<Simd::Sse3T>,
+              #endif
+              #ifdef CORRADE_ENABLE_SSSE3
+              &SimdTest::enableMacros<Simd::Ssse3T>,
+              #endif
+              #ifdef CORRADE_ENABLE_SSE41
+              &SimdTest::enableMacros<Simd::Sse41T>,
+              #endif
+              #ifdef CORRADE_ENABLE_SSE42
+              &SimdTest::enableMacros<Simd::Sse42T>,
+              #endif
+              #ifdef CORRADE_ENABLE_AVX
+              &SimdTest::enableMacros<Simd::AvxT>,
+              #endif
+              #ifdef CORRADE_ENABLE_AVX_F16C
+              &SimdTest::enableMacros<Simd::AvxF16cT>,
+              #endif
+              #ifdef CORRADE_ENABLE_AVX_FMA
+              &SimdTest::enableMacros<Simd::AvxFmaT>,
+              #endif
+              #ifdef CORRADE_ENABLE_AVX2
+              &SimdTest::enableMacros<Simd::Avx2T>,
+              #endif
+              #ifdef CORRADE_ENABLE_AVX512F
+              &SimdTest::enableMacros<Simd::Avx512fT>,
+              #endif
+              #ifdef CORRADE_ENABLE_NEON
+              &SimdTest::enableMacros<Simd::NeonT>,
+              #endif
+              #ifdef CORRADE_ENABLE_NEON_FP16
+              &SimdTest::enableMacros<Simd::NeonFp16T>,
+              #endif
+              #ifdef CORRADE_ENABLE_NEON_FMA
+              &SimdTest::enableMacros<Simd::NeonFmaT>,
+              #endif
+              #ifdef CORRADE_ENABLE_SIMD128
+              &SimdTest::enableMacros<Simd::Simd128T>,
+              #endif
 
               &SimdTest::debug,
               &SimdTest::debugPacked});
@@ -351,6 +407,10 @@ void SimdTest::tagDispatch() {
     #else
     CORRADE_SKIP("Only one Simd tag available on this platform, can't test.");
     #endif
+}
+
+template<class T> void SimdTest::enableMacros() {
+    setTestCaseTemplateName(Simd::TypeTraits<T>::name());
 }
 
 void SimdTest::debug() {

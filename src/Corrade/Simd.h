@@ -844,4 +844,97 @@ template<class T, class = decltype(TypeTraits<T>::Index)> inline Utility::Debug&
 
 }
 
+#if defined(CORRADE_TARGET_X86) || defined(DOXYGEN_GENERATING_OUTPUT)
+
+// #error mention that it *might* be good to actually compile with /arch: on msvc because not doing that will inhibit the optimizer
+// #error also not enabling /arch:AVX will cause sse/avx switch overhead
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_SSE2 __attribute__((__target__("sse2")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_SSE2
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_SSE3 __attribute__((__target__("sse3")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_SSE3
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_SSSE3 __attribute__((__target__("ssse3")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_SSSE3
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_SSE41 __attribute__((__target__("sse4.1")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_SSE41
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_SSE42 __attribute__((__target__("sse4.2")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_SSE42
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_AVX __attribute__((__target__("avx")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_AVX
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_AVX_F16C __attribute__((__target__("avx,f16c")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_AVX_F16C
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_AVX_FMA __attribute__((__target__("avx,fma")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_AVX_FMA
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_AVX2 __attribute__((__target__("avx2")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_AVX2
+#endif
+
+// #error GCC since 4.9, msvc since 2017 15.3 https://devblogs.microsoft.com/cppblog/microsoft-visual-studio-2017-supports-intel-avx-512/
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_AVX512F __attribute__((__target__("avx512f")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_AVX512F
+#endif
+
+#elif defined(CORRADE_TARGET_NEON) || defined(DOXYGEN_GENERATING_OUTPUT)
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_NEON __attribute__((__target__("fpu=neon")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_NEON
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_NEON_FP16 __attribute__((__target__("fpu=neon-fp16")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_NEON_FP16
+#endif
+
+#ifdef CORRADE_TARGET_GCC
+#define CORRADE_ENABLE_NEON_FMA __attribute__((__target__("fpu=neon-vfpv4")))
+#elif defined(CORRADE_TARGET_MSVC) || defined(DOXYGEN_GENERATING_OUTPUT)
+#define CORRADE_ENABLE_NEON_FMA
+#endif
+
+#elif defined(CORRADE_TARGET_WASM) || defined(DOXYGEN_GENERATING_OUTPUT)
+
+#ifdef CORRADE_TARGET_SIMD128
+#define CORRADE_ENABLE_SIMD128 __attribute__((__target__("simd128")))
+#endif
+
+#endif
+
 #endif
