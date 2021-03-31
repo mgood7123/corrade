@@ -27,6 +27,7 @@
 #include <sstream>
 
 #include "Corrade/Simd.h"
+#include "Corrade/Containers/StringView.h"
 #include "Corrade/TestSuite/Tester.h"
 #include "Corrade/Utility/DebugStl.h" /** @todo remove when <sstream> is gone */
 
@@ -34,6 +35,8 @@ namespace Corrade { namespace Test { namespace {
 
 struct SimdTest: TestSuite::Tester {
     explicit SimdTest();
+
+    void typeTraits();
 
     /* Most of the operator tests is inherited from EnumSetTest, just replacing
        Feature::Fast with Simd::Sse2, Feature::Cheap with Simd::Sse3,
@@ -61,7 +64,9 @@ struct SimdTest: TestSuite::Tester {
 };
 
 SimdTest::SimdTest() {
-    addTests({&SimdTest::featuresConstructScalar,
+    addTests({&SimdTest::typeTraits,
+
+              &SimdTest::featuresConstructScalar,
               &SimdTest::featuresConstruct,
               &SimdTest::featuresOperatorOr,
               &SimdTest::featuresOperatorAnd,
@@ -78,6 +83,23 @@ SimdTest::SimdTest() {
 
               &SimdTest::debug,
               &SimdTest::debugPacked});
+}
+
+using namespace Containers::Literals;
+
+void SimdTest::typeTraits() {
+    #ifdef CORRADE_TARGET_X86
+    CORRADE_VERIFY(Simd::TypeTraits<Simd::AvxF16cT>::Index);
+    CORRADE_COMPARE(Simd::TypeTraits<Simd::AvxF16cT>::name(), "AvxF16c"_s);
+    #elif defined(CORRADE_TARGET_ARM)
+    CORRADE_VERIFY(Simd::TypeTraits<Simd::NeonFp16T>::Index);
+    CORRADE_COMPARE(Simd::TypeTraits<Simd::NeonFp16T>::name(), "AvxF16c"_s);
+    #elif defined(CORRADE_TARGET_WASM
+    CORRADE_VERIFY(Simd::TypeTraits<Simd::Simd128T>::Index);
+    CORRADE_COMPARE(Simd::TypeTraits<Simd::Simd128T>::name(), "AvxF16c"_s);
+    #else
+    CORRADE_SKIP("No Simd tags available on this platform.");
+    #endif
 }
 
 void SimdTest::featuresConstructScalar() {

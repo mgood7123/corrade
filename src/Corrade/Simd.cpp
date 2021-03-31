@@ -98,11 +98,11 @@ Features::Features(): _data{} {
     #elif defined(CORRADE_TARGET_GCC)
     CORRADE_INTERNAL_ASSERT_OUTPUT(__get_cpuid(1, &cpuid.e.ax, &cpuid.e.bx, &cpuid.e.cx, &cpuid.e.dx));
     #endif
-    if(cpuid.e.dx & (1 << 26)) _data |= Implementation::Trait<Sse2T>::Index;
-    if(cpuid.e.cx & (1 <<  0)) _data |= Implementation::Trait<Sse3T>::Index;
-    if(cpuid.e.cx & (1 <<  9)) _data |= Implementation::Trait<Ssse3T>::Index;
-    if(cpuid.e.cx & (1 << 19)) _data |= Implementation::Trait<Sse41T>::Index;
-    if(cpuid.e.cx & (1 << 20)) _data |= Implementation::Trait<Sse42T>::Index;
+    if(cpuid.e.dx & (1 << 26)) _data |= TypeTraits<Sse2T>::Index;
+    if(cpuid.e.cx & (1 <<  0)) _data |= TypeTraits<Sse3T>::Index;
+    if(cpuid.e.cx & (1 <<  9)) _data |= TypeTraits<Ssse3T>::Index;
+    if(cpuid.e.cx & (1 << 19)) _data |= TypeTraits<Sse41T>::Index;
+    if(cpuid.e.cx & (1 << 20)) _data |= TypeTraits<Sse42T>::Index;
 
     /* AVX needs OS support checked, as the OS needs to be capable of saving
        and restoring the expanded registers when switching contexts:
@@ -124,14 +124,14 @@ Features::Features(): _data{} {
         const bool available = ((a|(std::uint64_t(d) << 32)) & 0x6) == 0x6;
         #endif
 
-        if(available) _data |= Implementation::Trait<AvxT>::Index;
+        if(available) _data |= TypeTraits<AvxT>::Index;
     }
 
     /* If AVX is not supported, we don't check any following flags either */
-    if(!(_data & Implementation::Trait<AvxT>::Index)) return;
+    if(!(_data & TypeTraits<AvxT>::Index)) return;
 
-    if(cpuid.e.cx & (1 << 29)) _data |= Implementation::Trait<AvxF16cT>::Index;
-    if(cpuid.e.cx & (1 << 12)) _data |= Implementation::Trait<AvxFmaT>::Index;
+    if(cpuid.e.cx & (1 << 29)) _data |= TypeTraits<AvxF16cT>::Index;
+    if(cpuid.e.cx & (1 << 12)) _data |= TypeTraits<AvxFmaT>::Index;
 
     /* https://en.wikipedia.org/wiki/CPUID#EAX=7,_ECX=0:_Extended_Features */
     #ifdef CORRADE_TARGET_MSVC
@@ -159,48 +159,48 @@ Features::Features(): _data{} {
     #else
     __cpuid_count(7, 0, cpuid.e.ax, cpuid.e.bx, cpuid.e.cx, cpuid.e.dx);
     #endif
-    if(cpuid.e.bx & (1 << 5)) _data |= Implementation::Trait<Avx2T>::Index;
-    if(cpuid.e.bx & (1 << 16)) _data |= Implementation::Trait<Avx512fT>::Index;
+    if(cpuid.e.bx & (1 << 5)) _data |= TypeTraits<Avx2T>::Index;
+    if(cpuid.e.bx & (1 << 16)) _data |= TypeTraits<Avx512fT>::Index;
 
     /* Fall back to compile-time-defined features otherwise. On x86 this is
        very prone to code rot, please try to keep it up-to-date PLEASE. */
     #elif defined(CORRADE_TARGET_X86)
     #ifdef CORRADE_TARGET_SSE2
-    _data |= Implementation::Trait<Sse2T>::Index;
+    _data |= TypeTraits<Sse2T>::Index;
     #endif
     #ifdef CORRADE_TARGET_SSE3
-    _data |= Implementation::Trait<Sse3T>::Index;
+    _data |= TypeTraits<Sse3T>::Index;
     #endif
     #ifdef CORRADE_TARGET_SSSE3
-    _data |= Implementation::Trait<Ssse3T>::Index;
+    _data |= TypeTraits<Ssse3T>::Index;
     #endif
     #ifdef CORRADE_TARGET_SSE41
-    _data |= Implementation::Trait<Sse41T>::Index;
+    _data |= TypeTraits<Sse41T>::Index;
     #endif
     #ifdef CORRADE_TARGET_SSE42
-    _data |= Implementation::Trait<Sse42T>::Index;
+    _data |= TypeTraits<Sse42T>::Index;
     #endif
     #ifdef CORRADE_TARGET_AVX
-    _data |= Implementation::Trait<AvxT>::Index;
+    _data |= TypeTraits<AvxT>::Index;
     #endif
     #ifdef CORRADE_TARGET_AVX2
-    _data |= Implementation::Trait<Avx2T>::Index;
+    _data |= TypeTraits<Avx2T>::Index;
     #endif
 
     #elif defined(CORRADE_TARGET_ARM)
     #ifdef CORRADE_TARGET_NEON
-    _data |= Implementation::Trait<NeonT>::Index;
+    _data |= TypeTraits<NeonT>::Index;
     #endif
     #ifdef CORRADE_TARGET_NEON_FP16
-    _data |= Implementation::Trait<NeonFp16T>::Index;
+    _data |= TypeTraits<NeonFp16T>::Index;
     #endif
     #ifdef CORRADE_TARGET_NEON_FMA
-    _data |= Implementation::Trait<NeonFmaT>::Index;
+    _data |= TypeTraits<NeonFmaT>::Index;
     #endif
 
     #elif defined(CORRADE_TARGET_WASM)
     #ifdef CORRADE_TARGET_SIMD128
-    _data |= Implementation::Trait<Simd128T>::Index;
+    _data |= TypeTraits<Simd128T>::Index;
     #endif
     #endif
 }
@@ -217,7 +217,7 @@ Utility::Debug& operator<<(Utility::Debug& debug, const Features value) {
         if(value & tag) {                                                   \
             if(!written) written = true;                                    \
             else debug << Utility::Debug::nospace << prefix << Utility::Debug::nospace; \
-            debug << #tag ## _s;                                            \
+            debug << TypeTraits<tag ## T>::name();                          \
         }
     #ifdef CORRADE_TARGET_X86
     _c(Sse2)

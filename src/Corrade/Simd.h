@@ -121,9 +121,34 @@ the detected set in some way:
 */
 namespace Simd {
 
-namespace Implementation {
-    template<class> struct Trait;
-}
+#ifndef DOXYGEN_GENERATING_OUTPUT
+template<class> struct TypeTraits;
+#else
+/**
+@brief Traits class for SIMD tag types
+
+Useful for detecting tag properties at compile time without the need for
+repeated code such as method overloading, cascaded ifs or template
+specializations for all tag types. All tag types have this class implemented.
+*/
+template<class T> struct TypeTraits {
+    enum: std::uint32_t {
+        /**
+         * Tag-specific index. Implementation-defined, is unique among all
+         * tags on given platform.
+         */
+        Index
+    };
+
+    /**
+     * @brief Tag name
+     *
+     * Returns a string representation of the tag, such as @cpp "AvxFma" @ce
+     * for @ref AvxFma.
+     */
+    static const char* name();
+};
+#endif
 
 /**
 @brief Scalar tag type
@@ -133,10 +158,13 @@ See the @ref Simd namespace and the @ref Scalar tag for more information.
 */
 struct ScalarT {};
 
-namespace Implementation {
-    /* Scalar code is when nothing else is available, thus no bits set */
-    template<> struct Trait<ScalarT> { enum: std::uint32_t { Index = 0 }; };
-}
+#ifndef DOXYGEN_GENERATING_OUTPUT
+/* Scalar code is when nothing else is available, thus no bits set */
+template<> struct TypeTraits<ScalarT> {
+    enum: std::uint32_t { Index = 0 };
+    static const char* name() { return "Scalar"; }
+};
+#endif
 
 #if defined(CORRADE_TARGET_X86) || defined(DOXYGEN_GENERATING_OUTPUT)
 /**
@@ -229,18 +257,48 @@ and the @ref Avx512f tag for more information.
 */
 struct Avx512fT: Avx2T {};
 
-namespace Implementation {
-    template<> struct Trait<Sse2T> { enum: std::uint32_t { Index = 1 << 0 }; };
-    template<> struct Trait<Sse3T> { enum: std::uint32_t { Index = 1 << 1 }; };
-    template<> struct Trait<Ssse3T> { enum: std::uint32_t { Index = 1 << 2 }; };
-    template<> struct Trait<Sse41T> { enum: std::uint32_t { Index = 1 << 3 }; };
-    template<> struct Trait<Sse42T> { enum: std::uint32_t { Index = 1 << 4 }; };
-    template<> struct Trait<AvxT> { enum: std::uint32_t { Index = 1 << 5 }; };
-    template<> struct Trait<AvxF16cT> { enum: std::uint32_t { Index = 1 << 6 }; };
-    template<> struct Trait<AvxFmaT> { enum: std::uint32_t { Index = 1 << 7 }; };
-    template<> struct Trait<Avx2T> { enum: std::uint32_t { Index = 1 << 8 }; };
-    template<> struct Trait<Avx512fT> { enum: std::uint32_t { Index = 1 << 9 }; };
-}
+#ifndef DOXYGEN_GENERATING_OUTPUT
+template<> struct TypeTraits<Sse2T> {
+    enum: std::uint32_t { Index = 1 << 0 };
+    static const char* name() { return "Sse2"; }
+};
+template<> struct TypeTraits<Sse3T> {
+    enum: std::uint32_t { Index = 1 << 1 };
+    static const char* name() { return "Sse3"; }
+};
+template<> struct TypeTraits<Ssse3T> {
+    enum: std::uint32_t { Index = 1 << 2 };
+    static const char* name() { return "Ssse3"; }
+};
+template<> struct TypeTraits<Sse41T> {
+    enum: std::uint32_t { Index = 1 << 3 };
+    static const char* name() { return "Sse41"; }
+};
+template<> struct TypeTraits<Sse42T> {
+    enum: std::uint32_t { Index = 1 << 4 };
+    static const char* name() { return "Sse42"; }
+};
+template<> struct TypeTraits<AvxT> {
+    enum: std::uint32_t { Index = 1 << 5 };
+    static const char* name() { return "Avx"; }
+};
+template<> struct TypeTraits<AvxF16cT> {
+    enum: std::uint32_t { Index = 1 << 6 };
+    static const char* name() { return "AvxF16c"; }
+};
+template<> struct TypeTraits<AvxFmaT> {
+    enum: std::uint32_t { Index = 1 << 7 };
+    static const char* name() { return "AvxFma"; }
+};
+template<> struct TypeTraits<Avx2T> {
+    enum: std::uint32_t { Index = 1 << 8 };
+    static const char* name() { return "Avx2"; }
+};
+template<> struct TypeTraits<Avx512fT> {
+    enum: std::uint32_t { Index = 1 << 9 };
+    static const char* name() { return "Avx512f"; }
+};
+#endif
 #endif
 
 #if defined(CORRADE_TARGET_ARM) || defined(DOXYGEN_GENERATING_OUTPUT)
@@ -271,11 +329,20 @@ and the @ref NeonFma tag for more information.
 */
 struct NeonFmaT {};
 
-namespace Implementation {
-    template<> struct Trait<NeonT> { enum: std::uint32_t { Index = 1 << 0 }; };
-    template<> struct Trait<NeonFp16T> { enum: std::uint32_t { Index = 1 << 1 }; };
-    template<> struct Trait<NeonFmaT> { enum: std::uint32_t { Index = 1 << 2 }; };
-}
+#ifndef DOXYGEN_GENERATING_OUTPUT
+template<> struct TypeTraits<NeonT> {
+    enum: std::uint32_t { Index = 1 << 0 };
+    static const char* name() { return "Neon"; }
+};
+template<> struct TypeTraits<NeonFp16T> {
+    enum: std::uint32_t { Index = 1 << 1 };
+    static const char* name() { return "NeonFp16"; }
+};
+template<> struct TypeTraits<NeonFmaT> {
+    enum: std::uint32_t { Index = 1 << 2 };
+    static const char* name() { return "NeonFma"; }
+};
+#endif
 #endif
 
 #if defined(CORRADE_TARGET_EMSCRIPTEN) || defined(DOXYGEN_GENERATING_OUTPUT)
@@ -288,9 +355,12 @@ namespace and the @ref Simd128 tag for more information.
 */
 struct Simd128T: ScalarT {};
 
-namespace Implementation {
-    template<> struct Trait<Simd128T> { enum: std::uint32_t { Index = 1 << 0 }; };
-}
+#ifndef DOXYGEN_GENERATING_OUTPUT
+template<> struct TypeTraits<Simd128T> {
+    enum: std::uint32_t { Index = 1 << 0 };
+    static const char* name() { return "Simd128"; }
+};
+#endif
 #endif
 
 /**
@@ -590,7 +660,7 @@ class CORRADE_UTILITY_EXPORT Features {
         explicit Features();
 
         /** @brief Construct from a tag */
-        template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr /*implicit*/ Features(T) noexcept: _data{Implementation::Trait<T>::Index} {}
+        template<class T, class = decltype(TypeTraits<T>::Index)> constexpr /*implicit*/ Features(T) noexcept: _data{TypeTraits<T>::Index} {}
 
         /** @brief Equality comparison */
         constexpr bool operator==(Features other) const {
@@ -689,7 +759,7 @@ class CORRADE_UTILITY_EXPORT Features {
 
 Same as @ref Features::operator==().
 */
-template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr bool operator==(T a, Features b) {
+template<class T, class = decltype(TypeTraits<T>::Index)> constexpr bool operator==(T a, Features b) {
     return Features(a) == b;
 }
 
@@ -698,7 +768,7 @@ template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr b
 
 Same as @ref Features::operator!=().
 */
-template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr bool operator!=(T a, Features b) {
+template<class T, class = decltype(TypeTraits<T>::Index)> constexpr bool operator!=(T a, Features b) {
     return Features(a) != b;
 }
 
@@ -707,7 +777,7 @@ template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr b
 
 Same as @ref Features::operator>=().
 */
-template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr bool operator>=(T a, Features b) {
+template<class T, class = decltype(TypeTraits<T>::Index)> constexpr bool operator>=(T a, Features b) {
     return Features(a) >= b;
 }
 
@@ -716,7 +786,7 @@ template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr b
 
 Same as @ref Features::operator<=().
 */
-template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr bool operator<=(T a, Features b) {
+template<class T, class = decltype(TypeTraits<T>::Index)> constexpr bool operator<=(T a, Features b) {
     return Features(a) <= b;
 }
 
@@ -725,7 +795,7 @@ template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr b
 
 Same as @ref Features::operator|().
 */
-template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr Features operator|(T a, Features b) {
+template<class T, class = decltype(TypeTraits<T>::Index)> constexpr Features operator|(T a, Features b) {
     return b | a;
 }
 
@@ -734,7 +804,7 @@ template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr F
 
 Same as @ref Features::operator&().
 */
-template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr Features operator&(T a, Features b) {
+template<class T, class = decltype(TypeTraits<T>::Index)> constexpr Features operator&(T a, Features b) {
     return b & a;
 }
 
@@ -743,7 +813,7 @@ template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr F
 
 Same as @ref Features::operator^().
 */
-template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr Features operator^(T a, Features b) {
+template<class T, class = decltype(TypeTraits<T>::Index)> constexpr Features operator^(T a, Features b) {
     return b ^ a;
 }
 
@@ -752,7 +822,7 @@ template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr F
 
 Same as @ref Features::operator~().
 */
-template<class T, class = decltype(Implementation::Trait<T>::Index)> constexpr Features operator~(T a) {
+template<class T, class = decltype(TypeTraits<T>::Index)> constexpr Features operator~(T a) {
     return ~Features(a);
 }
 
@@ -766,7 +836,7 @@ CORRADE_UTILITY_EXPORT Utility::Debug& operator<<(Utility::Debug& debug, Feature
 @overload
 @m_since_latest
 */
-template<class T, class = decltype(Implementation::Trait<T>::Index)> inline Utility::Debug& operator<<(Utility::Debug& debug, T value) {
+template<class T, class = decltype(TypeTraits<T>::Index)> inline Utility::Debug& operator<<(Utility::Debug& debug, T value) {
     return operator<<(debug, Features{value});
 }
 
